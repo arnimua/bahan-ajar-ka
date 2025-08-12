@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presentasi Interaktif: Pengenalan Kecerdasan Artifisial</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Pengaturan Font dan Gaya Dasar */
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #0a0a0a;
+            color: #e0e0e0;
+            overflow: hidden;
+        }
+
+        h1, h2, h3 {
+            font-family: 'Orbitron', sans-serif;
+            text-shadow: 0 0 5px #00aaff, 0 0 10px #00aaff;
+        }
+        
+        .quote-text {
+            font-family: 'Roboto', serif;
+            font-style: italic;
+        }
+
+        /* Latar Belakang Partikel Animasi */
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        /* Efek Glassmorphism */
+        .glass-card {
+            background: rgba(10, 10, 10, 0.4);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+        }
+        .glass-card:hover:not(.non-hover) {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px 0 rgba(0, 170, 255, 0.5);
+        }
+        .nav-btn:hover {
+             background-color: rgba(0, 170, 255, 0.3);
+        }
+
+        /* Pengelolaan Slide */
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            padding: 5rem 1rem; /* Padding atas-bawah untuk bar */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.7s ease-in-out, visibility 0.7s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 2;
+        }
+        @media (min-width: 768px) { /* md breakpoint */
+            .slide {
+                padding: 6rem 5rem;
+            }
+        }
+        .active-slide {
+            opacity: 1;
+            visibility: visible;
+            z-index: 3;
+        }
+
+        /* Animasi Konten Slide */
+        .slide-content {
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInFromBottom 0.8s ease-in-out 0.3s forwards;
+        }
+        @keyframes fadeInFromBottom {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Latar Belakang Gradien untuk Slide */
+        .gradient-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            opacity: 0;
+            transition: opacity 0.7s ease-in-out;
+        }
+        .gradient-1 { background: radial-gradient(circle, rgba(28,0,36,0.3) 0%, rgba(5,6,38,0.5) 100%); }
+        .gradient-2 { background: radial-gradient(circle, rgba(36,10,0,0.3) 0%, rgba(38,25,5,0.5) 100%); }
+        .gradient-3 { background: radial-gradient(circle, rgba(0,36,25,0.3) 0%, rgba(5,38,36,0.5) 100%); }
+        .gradient-4 { background: radial-gradient(circle, rgba(36,0,32,0.3) 0%, rgba(38,5,19,0.5) 100%); }
+        .gradient-5 { background: radial-gradient(circle, rgba(0,25,36,0.3) 0%, rgba(5,29,38,0.5) 100%); }
+        .active-gradient {
+            opacity: 1;
+        }
+
+        /* Scrollbar Kustom untuk Modal */
+        .modal-content::-webkit-scrollbar { width: 8px; }
+        .modal-content::-webkit-scrollbar-track { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        .modal-content::-webkit-scrollbar-thumb { background: rgba(0, 170, 255, 0.6); border-radius: 10px; }
+        .modal-content::-webkit-scrollbar-thumb:hover { background: rgba(0, 170, 255, 1); }
+
+        /* Animasi untuk Peta Pembelajaran */
+        .subtopics-container {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out, margin-top 0.5s ease-in-out;
+        }
+        .subtopics-container.open {
+            max-height: 500px; /* Cukup besar untuk menampung konten */
+            opacity: 1;
+            margin-top: 1rem;
+        }
+        
+        /* Penanda untuk Daftar Isi Aktif */
+        .active-toc-item {
+            color: #22d3ee; /* cyan-400 */
+            font-weight: bold;
+        }
+
+        /* Animasi Ikon Panah Lipat */
+        .collapse-arrow {
+            transition: transform 0.5s ease-in-out;
+        }
+        .collapse-arrow.open {
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+<body class="bg-black">
+
+    <canvas id="particle-canvas"></canvas>
+    <div id="gradient-container"></div>
+
+    <!-- UI ATAS (STICKY) -->
+    <header id="top-bar" class="fixed top-0 left-0 w-full p-4 sm:p-6 z-30 transition-opacity duration-500">
+        <nav class="flex justify-between items-center max-w-7xl mx-auto">
+            <!-- Tombol Kiri -->
+            <div class="flex-1 flex justify-start">
+                <button id="home-btn" aria-label="Kembali ke Peta Pembelajaran" class="glass-card p-2 sm:p-3 rounded-full hover:bg-cyan-500/50 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                </button>
+            </div>
+            
+            <!-- Tampilan Topik Dinamis -->
+            <div id="topic-display-container" class="flex-1 text-center text-cyan-300 font-bold hidden sm:block transition-opacity duration-300 opacity-0">
+                <span id="current-topic" class="text-sm lg:text-base"></span>
+            </div>
+
+            <!-- Tombol Kanan -->
+            <div class="flex-1 flex justify-end items-center space-x-2 sm:space-x-4">
+                <button id="toc-btn" aria-label="Daftar Isi" class="glass-card p-2 sm:p-3 rounded-full hover:bg-cyan-500/50 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                </button>
+                <button id="glossary-btn" aria-label="Glosarium" class="glass-card p-2 sm:p-3 rounded-full hover:bg-cyan-500/50 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path></svg>
+                </button>
+                <button id="fullscreen-btn" aria-label="Mode Layar Penuh" class="glass-card p-2 sm:p-3 rounded-full hover:bg-cyan-500/50 transition-all">
+                    <svg id="fullscreen-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- UI BAWAH (STICKY) -->
+    <footer id="bottom-bar" class="fixed bottom-0 left-0 w-full p-4 sm:p-6 z-30 transition-opacity duration-500">
+        <div class="max-w-7xl mx-auto">
+            <nav class="flex justify-between items-center">
+                <button id="prev-btn" aria-label="Slide Sebelumnya" class="glass-card nav-btn p-2 sm:p-4 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 sm:h-8 sm:w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+                </button>
+                <span id="slide-counter" class="glass-card text-sm sm:text-lg font-bold px-3 py-1 sm:px-4 sm:py-2 non-hover">0 / 0</span>
+                <button id="next-btn" aria-label="Slide Berikutnya" class="glass-card nav-btn p-2 sm:p-4 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 sm:h-8 sm:w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+                </button>
+            </nav>
+            <div class="w-full bg-gray-700/50 rounded-full h-1.5 sm:h-2.5 mt-4">
+                <div id="progress-bar" class="bg-cyan-400 h-1.5 sm:h-2.5 rounded-full" style="width: 0%; transition: width 0.5s ease-in-out;"></div>
+            </div>
+        </div>
+    </footer>
+
+    <main id="presentation-container">
+        <!-- Slide 0: Judul -->
+        <section class="slide active-slide" data-title="Halaman Judul">
+            <div class="slide-content text-center">
+                <h1 class="text-4xl sm:text-6xl md:text-7xl font-bold tracking-widest text-cyan-400">PENGENALAN KECERDASAN ARTIFISIAL</h1>
+                <p class="text-xl sm:text-2xl md:text-3xl mt-4 text-gray-300">Memahami Konsep, Aplikasi, dan Kolaborasi dengan AI</p>
+                <button id="start-btn" class="mt-8 glass-card text-lg sm:text-2xl px-6 py-3 sm:px-8 sm:py-4 font-bold hover:bg-cyan-400/50 transition-colors">Mulai</button>
+            </div>
+        </section>
+
+        <!-- Slide 1: Tujuan Pembelajaran -->
+        <section class="slide" data-topic="Pendahuluan">
+            <div class="slide-content w-full max-w-4xl text-left">
+                <h2 class="text-3xl sm:text-5xl mb-6 sm:mb-8 text-center">Tujuan Pembelajaran</h2>
+                <div class="glass-card p-4 sm:p-8 text-base sm:text-lg space-y-4">
+                    <p>Setelah mengikuti rangkaian pertemuan ini, murid diharapkan mampu:</p>
+                    <ul class="list-disc list-inside space-y-3">
+                        <li>Menjelaskan konsep dasar, cara kerja, dan etika penggunaan Kecerdasan Artifisial (AI) dengan percaya diri.</li>
+                        <li>Mengidentifikasi berbagai jenis platform AI dan mempraktikkan cara berinteraksi (prompting) untuk tugas sederhana.</li>
+                        <li>Menganalisis contoh penerapan AI yang relevan dengan program keahliannya masing-masing.</li>
+                        <li>Berkolaborasi dalam kelompok untuk merancang sebuah rencana proyek yang mengintegrasikan AI untuk memecahkan masalah kontekstual di bidangnya.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 2: Peta Pembelajaran -->
+        <section class="slide" data-slide-map data-topic="Pendahuluan">
+            <div class="slide-content text-center w-full">
+                <h2 class="text-3xl sm:text-5xl mb-8 sm:mb-12">Peta Pembelajaran</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8 max-w-5xl mx-auto">
+                    <!-- Pertemuan 1: Dasar-Dasar AI -->
+                    <div class="glass-card p-6 sm:p-8">
+                        <div class="main-topic-card cursor-pointer flex justify-between items-center">
+                            <h3 class="text-2xl sm:text-3xl text-cyan-300 text-left">Pertemuan 1<br>Dasar-Dasar AI</h3>
+                            <svg class="collapse-arrow h-8 w-8 text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                            </svg>
+                        </div>
+                        <div class="subtopics-container">
+                            <div class="grid grid-cols-1 gap-4">
+                                <div class="glass-card p-4 cursor-pointer hover:bg-cyan-500/30 nav-subtopic flex justify-between items-center" data-slide-target-title="Dasar-Dasar AI">
+                                    <div>
+                                        <h5 class="text-lg text-cyan-400">Subtopik 1: Fondasi AI</h5>
+                                        <p class="mt-2 text-gray-300">Memahami konsep dan cara kerja AI</p>
+                                    </div>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                                </div>
+                                <div class="glass-card p-4 cursor-pointer hover:bg-cyan-500/30 nav-subtopic flex justify-between items-center" data-slide-target-title="Jenis & Ragam Perangkat AI">
+                                    <div>
+                                        <h5 class="text-lg text-cyan-400">Subtopik 2: Peralatan AI</h5>
+                                        <p class="mt-2 text-gray-300">Mengenal platform dan tools AI</p>
+                                    </div>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Pertemuan 2: Implementasi AI -->
+                    <div class="glass-card p-6 sm:p-8">
+                        <div class="main-topic-card cursor-pointer flex justify-between items-center">
+                             <h3 class="text-2xl sm:text-3xl text-cyan-300 text-left">Pertemuan 2<br>Implementasi AI</h3>
+                             <svg class="collapse-arrow h-8 w-8 text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                            </svg>
+                        </div>
+                        <div class="subtopics-container">
+                            <div class="grid grid-cols-1 gap-4">
+                                <div class="glass-card p-4 cursor-pointer hover:bg-cyan-500/30 nav-subtopic flex justify-between items-center" data-slide-target-title="Implementasi AI">
+                                    <div>
+                                        <h5 class="text-lg text-cyan-400">Subtopik 1: Aplikasi AI</h5>
+                                        <p class="mt-2 text-gray-300">AI di berbagai bidang kehidupan</p>
+                                    </div>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                                </div>
+                                <div class="glass-card p-4 cursor-pointer hover:bg-cyan-500/30 nav-subtopic flex justify-between items-center" data-slide-target-title="Kerangka Kerja Kolaborasi">
+                                    <div>
+                                        <h5 class="text-lg text-cyan-400">Subtopik 2: Proyek AI</h5>
+                                        <p class="mt-2 text-gray-300">Membangun solusi dengan AI</p>
+                                    </div>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- PERTEMUAN 1: FONDASI -->
+        <section class="slide" data-topic="Pertemuan 1: Dasar-Dasar AI">
+            <div class="slide-content text-center">
+                <h3 class="text-lg sm:text-2xl text-cyan-400">Pertemuan 1</h3>
+                <h2 class="text-3xl sm:text-5xl mt-2">Dasar-Dasar AI</h2>
+                <div class="mt-6 space-y-4">
+                    <div class="glass-card inline-block p-4 mx-2">
+                        <h4 class="text-xl text-cyan-300">Subtopik 1</h4>
+                        <p class="text-lg">Fondasi: Apa itu AI?</p>
+                    </div>
+                    <div class="glass-card inline-block p-4 mx-2">
+                        <h4 class="text-xl text-cyan-300">Subtopik 2</h4>
+                        <p class="text-lg">Peralatan: Platform AI</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE BARU: Video Pengantar -->
+        <section class="slide" data-topic="Pertemuan 1: Dasar-Dasar AI" data-subtopic="Fondasi AI">
+            <div class="slide-content text-center">
+                <h2 class="text-3xl sm:text-5xl mb-6">Video Pengantar: Apa itu AI?</h2>
+                <p class="text-lg sm:text-xl text-gray-300 mb-8">Tekan tombol play untuk menonton video pengantar.</p>
+                <button onclick="openModal('modal-video-intro')" class="glass-card p-4 rounded-full hover:bg-cyan-500/50 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 sm:h-24 sm:w-24 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polygon points="10 8 16 12 10 16 10 8" fill="currentColor"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </section>
+
+        <section class="slide" data-topic="Pertemuan 1: Dasar-Dasar AI" data-subtopic="Fondasi AI">
+            <div class="slide-content w-full max-w-5xl">
+                <h2 class="text-3xl sm:text-4xl text-center mb-8">Memahami Konsep AI</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                    <div class="glass-card p-4 sm:p-6 cursor-pointer" onclick="openModal('modal-ai-definisi')">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="text-xl sm:text-2xl text-cyan-300">Definisi & Konsep Dasar</h3>
+                                <p class="mt-2 text-gray-300 text-sm sm:text-base">Memahami apa itu Kecerdasan Artifisial (KA) dan evolusinya.</p>
+                            </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-cyan-400 ml-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                        </div>
+                    </div>
+                    <div class="glass-card p-4 sm:p-6 cursor-pointer" onclick="openModal('modal-ai-vs-manusia')">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="text-xl sm:text-2xl text-cyan-300">AI vs. Kecerdasan Manusia</h3>
+                                <p class="mt-2 text-gray-300 text-sm sm:text-base">Melihat perbedaan kunci antara cara mesin dan manusia berpikir.</p>
+                            </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-cyan-400 ml-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" data-topic="Pertemuan 1: Dasar-Dasar AI" data-subtopic="Fondasi AI">
+            <div class="slide-content w-full max-w-5xl">
+                <h2 class="text-3xl sm:text-4xl text-center mb-8">Cara Kerja & Keterbatasan AI</h2>
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                    <div class="glass-card p-4 sm:p-6 cursor-pointer" onclick="openModal('modal-ai-cara-kerja')">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="text-xl sm:text-2xl text-cyan-300">Cara Kerja AI</h3>
+                                <p class="mt-2 text-gray-300 text-sm sm:text-base">Menyelami proses Masukan -> Proses -> Luaran.</p>
+                            </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-cyan-400 ml-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                        </div>
+                    </div>
+                    <div class="glass-card p-4 sm:p-6 cursor-pointer" onclick="openModal('modal-ai-keterbatasan')">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="text-xl sm:text-2xl text-cyan-300">Keterbatasan AI</h3>
+                                <p class="mt-2 text-gray-300 text-sm sm:text-base">Mengenal isu bias dan "halusinasi" pada AI.</p>
+                            </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-cyan-400 ml-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="slide" data-topic="Pertemuan 1: Dasar-Dasar AI" data-subtopic="Fondasi AI">
+            <div class="slide-content w-full max-w-4xl">
+                <h2 class="text-3xl sm:text-4xl text-center mb-8">Aktivitas Pertemuan 1 - Fondasi AI</h2>
+                <div class="glass-card p-4 sm:p-8 text-base sm:text-lg text-left">
+                    <p class="font-bold text-cyan-300 text-xl sm:text-2xl mb-4">Diskusi Kelas</p>
+                    <p>Mari kita bedah sebuah contoh sederhana bersama:</p>
+                    <blockquote class="border-l-4 border-cyan-400 pl-4 italic my-4 text-sm sm:text-base">
+                        "Jika kita ingin sebuah AI mampu mengenali gambar sepeda motor, apa 'masukan'-nya? Apa 'proses' yang terjadi di dalam AI? Dan apa 'luaran' yang kita harapkan?"
+                    </blockquote>
+                    <p>Diskusikan dalam kelompok kecil, lalu bagikan pemikiran Anda dengan kelas.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" data-topic="Pertemuan 1: Dasar-Dasar AI" data-subtopic="Fondasi AI" data-title="Quote">
+            <div class="slide-content text-center w-full max-w-5xl">
+                <div class="glass-card p-8 sm:p-12">
+                     <p class="text-2xl sm:text-4xl quote-text text-cyan-300">"Kecerdasan buatan akan menjadi versi terbaik dari diri kita. Bukan sebagai pesaing, melainkan sebagai mitra untuk memperkuat kemanusiaan kita."</p>
+                     <p class="text-lg sm:text-xl mt-6">- Fei-Fei Li</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" data-topic="Pertemuan 1: Dasar-Dasar AI" data-subtopic="Fondasi AI">
+            <div class="slide-content text-center">
+                <h2 class="text-4xl sm:text-6xl">Kerja Bagus!</h2>
+                <p class="text-xl sm:text-2xl mt-4">Subtopik 1 Selesai. Mari lanjut ke Peralatan AI!</p>
+            </div>
+        </section>
+
+        <section class="slide" data-topic="Pertemuan 1: Dasar-Dasar AI" data-subtopic="Peralatan AI">
+            <div class="slide-content w-full max-w-5xl">
+                <h2 class="text-3xl sm:text-4xl text-center mb-8">Jenis & Ragam Perangkat AI</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                    <div class="glass-card p-4 sm:p-6 cursor-pointer" onclick="openModal('modal-ai-kapabilitas')">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="text-xl sm:text-2xl text-cyan-300">Jenis Kapabilitas AI</h3>
+                                <p class="mt-2 text-gray-300 text-sm sm:text-base">Mengenal ANI, AGI, dan ASI sebagai tingkatan kecerdasan buatan.</p>
+                            </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-cyan-400 ml-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                        </div>
+                    </div>
+                    <div class="glass-card p-4 sm:p-6 cursor-pointer" onclick="openModal('modal-ai-perangkat')">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="text-xl sm:text-2xl text-cyan-300">Ragam Perangkat AI</h3>
+                                <p class="mt-2 text-gray-300 text-sm sm:text-base">Melihat berbagai contoh platform AI berdasarkan fungsinya.</p>
+                            </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-cyan-400 ml-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="slide" data-topic="Pertemuan 1: Dasar-Dasar AI" data-subtopic="Peralatan AI">
+            <div class="slide-content w-full max-w-4xl">
+                <h2 class="text-3xl sm:text-4xl text-center mb-8">Aktivitas Pertemuan 1 - Peralatan AI</h2>
+                <div class="glass-card p-4 sm:p-8 text-base sm:text-lg text-left">
+                    <p class="font-bold text-cyan-300 text-xl sm:text-2xl mb-4">Praktik Prompting (LK 2.2)</p>
+                    <p>Saatnya mencoba langsung! Secara individu atau berpasangan, pilih salah satu aktivitas berikut:</p>
+                    <ul class="list-decimal list-inside space-y-3 mt-4 text-sm sm:text-base">
+                        <li>Gunakan AI text editor (seperti QuillBot atau Grammarly) untuk memperbaiki sebuah paragraf.</li>
+                        <li>Gunakan AI data analysis (seperti ChatGPT atau Julius AI) untuk mengolah data nilai siswa yang sederhana.</li>
+                        <li>Gunakan AI image generator (seperti Midjourney atau DALL-E 3) untuk membuat gambar berdasarkan deskripsi teks.</li>
+                    </ul>
+                    <p class="mt-4">Fokus pada bagaimana Anda memberikan perintah (prompt) untuk mendapatkan hasil yang diinginkan.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" data-topic="Pertemuan 1: Dasar-Dasar AI" data-subtopic="Peralatan AI" data-title="Quote">
+            <div class="slide-content text-center w-full max-w-5xl">
+                <div class="glass-card p-8 sm:p-12">
+                     <p class="text-2xl sm:text-4xl quote-text text-cyan-300">"Alih-alih kecerdasan buatan, saya pikir kita akan 'menambah' kecerdasan kita."</p>
+                     <p class="text-lg sm:text-xl mt-6">- Ginni Rometty</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" data-topic="Pertemuan 1: Dasar-Dasar AI" data-subtopic="Peralatan AI">
+            <div class="slide-content text-center">
+                <h2 class="text-4xl sm:text-6xl">Luar Biasa!</h2>
+                <p class="text-xl sm:text-2xl mt-4">Anda telah berinteraksi langsung dengan AI.</p>
+            </div>
+        </section>
+
+        <!-- PERTEMUAN 2: IMPLEMENTASI AI -->
+        <section class="slide" data-topic="Pertemuan 2: Implementasi AI">
+            <div class="slide-content text-center">
+                <h3 class="text-lg sm:text-2xl text-cyan-400">Pertemuan 2</h3>
+                <h2 class="text-3xl sm:text-5xl mt-2">Implementasi AI</h2>
+                <div class="mt-6 space-y-4">
+                    <div class="glass-card inline-block p-4 mx-2">
+                        <h4 class="text-xl text-cyan-300">Subtopik 1</h4>
+                        <p class="text-lg">Aplikasi: AI di Dunia Nyata</p>
+                    </div>
+                    <div class="glass-card inline-block p-4 mx-2">
+                        <h4 class="text-xl text-cyan-300">Subtopik 2</h4>
+                        <p class="text-lg">Proyek: Membangun Solusi</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" data-topic="Pertemuan 2: Implementasi AI" data-subtopic="Aplikasi AI">
+            <div class="slide-content w-full max-w-5xl">
+                <h2 class="text-3xl sm:text-4xl text-center mb-8">Pemanfaatan AI di Berbagai Bidang</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                    <div class="glass-card p-4 sm:p-6 cursor-pointer" onclick="openModal('modal-ai-umum')">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="text-xl sm:text-2xl text-cyan-300">Bidang Umum</h3>
+                                <p class="mt-2 text-gray-300 text-sm sm:text-base">Melihat penerapan AI di bidang Ekonomi, Kesehatan, Pendidikan, dll.</p>
+                            </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-cyan-400 ml-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                        </div>
+                    </div>
+                    <div class="glass-card p-4 sm:p-6 cursor-pointer" onclick="openModal('modal-ai-khusus')">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="text-xl sm:text-2xl text-cyan-300">Bidang Khusus (Keahlian)</h3>
+                                <p class="mt-2 text-gray-300 text-sm sm:text-base">Menemukan contoh AI yang relevan dengan jurusan: Kuliner, Kecantikan, Otomotif, dll.</p>
+                            </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-cyan-400 ml-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="slide" data-topic="Pertemuan 2: Implementasi AI" data-subtopic="Aplikasi AI">
+            <div class="slide-content w-full max-w-4xl">
+                <h2 class="text-3xl sm:text-4xl text-center mb-8">Aktivitas Pertemuan 2 - Aplikasi AI</h2>
+                <div class="glass-card p-4 sm:p-8 text-base sm:text-lg text-left">
+                    <p class="font-bold text-cyan-300 text-xl sm:text-2xl mb-4">Gallery Walk</p>
+                    <p>Mari hubungkan AI dengan jurusan Anda!</p>
+                    <ol class="list-decimal list-inside space-y-3 mt-4 text-sm sm:text-base">
+                        <li>Bentuk kelompok berdasarkan program keahlian.</li>
+                        <li>Cari contoh penerapan AI yang paling menarik di bidang Anda dari materi yang disediakan (misal: Tata Kecantikan mencari L'Oréal Perso, Tata Boga tentang ChefGPT).</li>
+                        <li>Tuliskan 3 poin penting tentang teknologi tersebut di kertas plano.</li>
+                        <li>Presentasi singkat hasil temuan Anda kepada kelompok lain.</li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" data-topic="Pertemuan 2: Implementasi AI" data-subtopic="Aplikasi AI" data-title="Quote">
+            <div class="slide-content text-center w-full max-w-5xl">
+                <div class="glass-card p-8 sm:p-12">
+                     <p class="text-2xl sm:text-4xl quote-text text-cyan-300">"Bahaya sebenarnya bukanlah komputer akan mulai berpikir seperti manusia, tetapi manusia yang akan mulai berpikir seperti komputer."</p>
+                     <p class="text-lg sm:text-xl mt-6">- Sydney J. Harris</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" data-topic="Pertemuan 2: Implementasi AI" data-subtopic="Proyek AI">
+            <div class="slide-content w-full max-w-4xl">
+                <h2 class="text-3xl sm:text-4xl text-center mb-8">Kerangka Kerja Kolaborasi</h2>
+                <div class="glass-card p-8 text-center cursor-pointer" onclick="openModal('modal-ai-kolaborasi')">
+                     <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="text-xl sm:text-3xl text-cyan-300">Kuadran Kolaborasi Manusia-AI</h3>
+                            <p class="mt-4 text-base sm:text-xl">Memahami bagaimana manusia dan AI dapat bekerja sama secara efektif untuk menciptakan solusi inovatif.</p>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-cyan-400 ml-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" data-topic="Pertemuan 2: Implementasi AI" data-subtopic="Proyek AI">
+            <div class="slide-content w-full max-w-4xl">
+                <h2 class="text-3xl sm:text-4xl text-center mb-8">Aktivitas Pertemuan 2 - Proyek AI</h2>
+                <div class="glass-card p-4 sm:p-8 text-base sm:text-lg text-left">
+                    <p class="font-bold text-cyan-300 text-xl sm:text-2xl mb-4">Kerja Kelompok Mendesain Proyek (LK 2.3)</p>
+                    <p>Saatnya menerapkan semua yang telah dipelajari!</p>
+                     <ol class="list-decimal list-inside space-y-3 mt-4 text-sm sm:text-base">
+                        <li>Tetap dalam kelompok jurusan Anda.</li>
+                        <li>Definisikan sebuah masalah nyata di bidang keahlian Anda.</li>
+                        <li>Rancang sebuah konsep/rencana solusi untuk masalah tersebut dengan mengintegrasikan teknologi AI. Gunakan struktur dari Lembar Kerja 2.3 sebagai panduan.</li>
+                        <li>Hasil akhir adalah presentasi singkat mengenai rencana proyek Anda.</li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" data-topic="Pertemuan 2: Implementasi AI" data-subtopic="Proyek AI" data-title="Quote">
+            <div class="slide-content text-center w-full max-w-5xl">
+                <div class="glass-card p-8 sm:p-12">
+                     <p class="text-2xl sm:text-4xl quote-text text-cyan-300">"Dilema terbesar dari kecerdasan buatan bukanlah apakah mesin bisa berpikir, melainkan apakah manusia akan berhenti berpikir. Saat mesin mulai menunjukkan kemampuannya, jangan biarkan kita hanya menjadi penonton yang terpesona. Karena pada akhirnya, AI hanyalah cermin—ia akan memantulkan kecerdasan kita jika kita terus belajar, atau memantulkan kemalasan kita jika kita memilih diam."</p>
+                     <p class="text-lg sm:text-xl mt-6">- dyt.kotzen</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" data-topic="Penutup">
+            <div class="slide-content text-center">
+                <h2 class="text-4xl sm:text-6xl">Presentasi Selesai</h2>
+                <p class="text-xl sm:text-2xl mt-4">Terima kasih telah mengikuti perjalanan ini.</p>
+                <p class="mt-8 text-base sm:text-xl text-gray-300">Mari bersama membangun generasi yang tidak hanya menggunakan teknologi, tetapi juga mampu menciptakannya.</p>
+            </div>
+        </section>
+    </main>
+
+    <div id="modal-container" class="fixed inset-0 bg-black bg-opacity-70 z-40 flex justify-center items-center p-4 hidden" onclick="closeAllModals()">
+        <!-- Modal Video -->
+        <div id="modal-video-intro" class="modal-item glass-card w-full max-w-5xl h-full max-h-[80vh] p-4 sm:p-8 hidden" onclick="event.stopPropagation()">
+            <h2 class="text-2xl sm:text-3xl text-cyan-400 mb-6">Video Pengantar: Apa itu AI?</h2>
+            <div class="modal-content h-[calc(100%-6rem)] flex items-center justify-center bg-black rounded-lg">
+                <iframe id="video-iframe" class="w-full h-full" src="" data-src="https://www.youtube.com/embed/X6Tj2PT41v8?si=wxPjgUiNuvzt7vu5&autoplay=1" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+            </div>
+        </div>
+        
+        <!-- ... Konten modal lainnya ... -->
+        <div id="modal-ai-definisi" class="modal-item glass-card w-full max-w-3xl h-full max-h-[80vh] p-4 sm:p-8 hidden" onclick="event.stopPropagation()">
+            <h2 class="text-2xl sm:text-3xl text-cyan-400 mb-6">Definisi & Konsep Dasar AI</h2>
+            <div class="modal-content overflow-y-auto h-[calc(100%-6rem)] pr-4 text-base sm:text-lg space-y-4">
+                <p><b>Kecerdasan Artifisial (KA)</b> atau <b>Artificial Intelligence (AI)</b> adalah ilmu dan rekayasa dalam menciptakan mesin cerdas, terutama program komputer yang cerdas. Secara praktis, AI dapat dipahami sebagai sistem yang didesain untuk melakukan tugas yang biasanya memerlukan kecerdasan manusia, seperti persepsi visual, pengenalan suara, pengambilan keputusan, dan terjemahan bahasa.</p>
+                <img src="https://placehold.co/600x300/1a1a1a/e0e0e0?text=Evolusi+AI" class="w-full rounded-lg my-4" alt="Diagram Evolusi AI" onerror="this.onerror=null;this.src='https://placehold.co/600x300/1a1a1a/e0e0e0?text=Gambar+Tidak+Tersedia';">
+                <p>Evolusi AI berjalan dari sistem berbasis aturan (Era Simbolik), beralih ke algoritma yang belajar dari data (Pembelajaran Mesin), hingga puncaknya saat ini pada jaringan saraf tiruan yang mendalam (Deep Learning).</p>
+            </div>
+        </div>
+        <div id="modal-ai-vs-manusia" class="modal-item glass-card w-full max-w-3xl h-full max-h-[80vh] p-4 sm:p-8 hidden" onclick="event.stopPropagation()">
+            <h2 class="text-2xl sm:text-3xl text-cyan-400 mb-6">Perbandingan AI vs. Kecerdasan Manusia</h2>
+            <div class="modal-content overflow-y-auto h-[calc(100%-6rem)] pr-4 text-base sm:text-lg space-y-4">
+                <p>Meskipun canggih, AI berbeda secara fundamental dengan kecerdasan manusia. Berikut perbandingannya (berdasarkan Tabel 2, Hal. 20):</p>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-cyan-500">
+                                <th class="p-2">Kecerdasan Artifisial</th>
+                                <th class="p-2">Kecerdasan Manusia</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b border-gray-700">
+                                <td class="p-2">Tidak memiliki perasaan, hanya mengikuti instruksi.</td>
+                                <td class="p-2">Bisa berpikir sendiri, memiliki perasaan, dan kreativitas.</td>
+                            </tr>
+                            <tr class="border-b border-gray-700">
+                                <td class="p-2">Belajar dari data dan program yang diberikan.</td>
+                                <td class="p-2">Belajar dari banyak hal dan beradaptasi melalui interaksi sosial.</td>
+                            </tr>
+                            <tr class="border-b border-gray-700">
+                                <td class="p-2">Hanya memahami hal yang ada dalam datanya.</td>
+                                <td class="p-2">Bisa memahami konteks yang luas.</td>
+                            </tr>
+                            <tr>
+                                <td class="p-2">Membuat keputusan berdasarkan angka dan pola.</td>
+                                <td class="p-2">Membuat keputusan dengan pertimbangan emosi, nilai moral, dan etika.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div id="modal-ai-cara-kerja" class="modal-item glass-card w-full max-w-3xl h-full max-h-[80vh] p-4 sm:p-8 hidden" onclick="event.stopPropagation()">
+            <h2 class="text-2xl sm:text-3xl text-cyan-400 mb-6">Cara Kerja AI (Masukan -> Proses -> Luaran)</h2>
+            <div class="modal-content overflow-y-auto h-[calc(100%-6rem)] pr-4 text-base sm:text-lg space-y-4">
+                <p>Cara kerja AI menyerupai cara manusia belajar, melalui tiga tahapan utama (berdasarkan Gambar 5, Hal. 22):</p>
+                <img src="https://placehold.co/600x250/1a1a1a/e0e0e0?text=Diagram:+Masukan+->+Proses+->+Luaran" class="w-full rounded-lg my-4" alt="Diagram Cara Kerja AI" onerror="this.onerror=null;this.src='https://placehold.co/600x250/1a1a1a/e0e0e0?text=Gambar+Tidak+Tersedia';">
+                <ol class="list-decimal list-inside space-y-3">
+                    <li><b>Masukan (Data):</b> AI menerima "bahan belajar" berupa data. Data ini bisa berbentuk teks, gambar, suara, angka, atau pertanyaan. Contoh: ribuan gambar sepeda motor.</li>
+                    <li><b>Proses (Pelatihan Data):</b> Menggunakan Algoritma AI (seperti Machine Learning), sistem akan "berlatih" untuk mengenali pola dari data yang diberikan. AI akan belajar membedakan ciri-ciri sepeda motor dari objek lain.</li>
+                    <li><b>Luaran (Prediksi & Output):</b> Setelah dilatih, AI dapat menerapkan pengetahuannya untuk menghasilkan output, seperti keputusan, hasil karya seni, prediksi, atau saran. Contoh: Saat diberi gambar baru, AI bisa memprediksi "Ini adalah gambar sepeda motor".</li>
+                </ol>
+            </div>
+        </div>
+        <div id="modal-ai-keterbatasan" class="modal-item glass-card w-full max-w-3xl h-full max-h-[80vh] p-4 sm:p-8 hidden" onclick="event.stopPropagation()">
+            <h2 class="text-2xl sm:text-3xl text-cyan-400 mb-6">Keterbatasan AI: Bias dan Halusinasi</h2>
+            <div class="modal-content overflow-y-auto h-[calc(100%-6rem)] pr-4 text-base sm:text-lg space-y-4">
+                <p>AI tidak sempurna dan memiliki keterbatasan penting (Hal. 23 & 50):</p>
+                <ul class="list-disc list-inside space-y-3">
+                    <li><b>Sangat Bergantung pada Data:</b> Kualitas output AI sangat ditentukan oleh kualitas dan kuantitas data latihnya.</li>
+                    <li><b>Bias:</b> Jika data latihnya bias (tidak representatif), maka AI juga akan menghasilkan output yang bias. Contoh: Sistem pengenalan wajah yang lebih sulit mengenali warna kulit tertentu jika datanya didominasi oleh satu ras.</li>
+                    <li><b>Halusinasi:</b> Terkadang, AI dapat menghasilkan informasi yang terdengar meyakinkan tetapi sebenarnya salah atau tidak ada dalam data latihnya. Ini disebut "halusinasi".</li>
+                    <li><b>Kurang Pemahaman Kontekstual:</b> AI tidak memiliki pemahaman mendalam, akal sehat, atau kreativitas sejati seperti manusia.</li>
+                </ul>
+                <p>Oleh karena itu, peran manusia untuk melakukan verifikasi, pengawasan, dan pertimbangan etis tetap sangat krusial.</p>
+            </div>
+        </div>
+        <div id="modal-glossary" class="modal-item glass-card w-full max-w-3xl h-full max-h-[80vh] p-4 sm:p-8 hidden" onclick="event.stopPropagation()">
+            <h2 class="text-2xl sm:text-3xl text-cyan-400 mb-6">Glosarium</h2>
+            <div class="modal-content overflow-y-auto h-[calc(100%-6rem)] pr-4 text-base sm:text-lg space-y-4">
+                <!-- Glosarium content -->
+            </div>
+        </div>
+        <!-- Modal Daftar Isi (TOC) -->
+        <div id="modal-toc" class="modal-item glass-card w-full max-w-3xl h-full max-h-[80vh] p-4 sm:p-8 hidden" onclick="event.stopPropagation()">
+            <h2 class="text-2xl sm:text-3xl text-cyan-400 mb-6">Daftar Isi</h2>
+            <div id="toc-content" class="modal-content overflow-y-auto h-[calc(100%-6rem)] pr-4 text-base sm:text-lg space-y-2">
+                <!-- Daftar isi akan di-generate oleh JavaScript -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Dialog Lanjutkan Sesi -->
+    <div id="resume-dialog" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 glass-card p-8 hidden">
+        <p class="text-xl mb-6">Lanjutkan dari sesi terakhir?</p>
+        <div class="flex justify-center gap-4">
+            <button id="resume-yes" class="px-6 py-2 bg-cyan-600 hover:bg-cyan-500 rounded-lg">Ya</button>
+            <button id="resume-no" class="px-6 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg">Tidak</button>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- VARIABEL GLOBAL & SELEKTOR DOM ---
+            const slides = document.querySelectorAll('.slide');
+            const totalSlides = slides.length;
+            let currentSlideIndex = 0;
+            let animationFrameId; // Untuk kontrol animasi partikel
+
+            const progressBar = document.getElementById('progress-bar');
+            const slideCounter = document.getElementById('slide-counter');
+            const nextBtn = document.getElementById('next-btn');
+            const prevBtn = document.getElementById('prev-btn');
+            const homeBtn = document.getElementById('home-btn');
+            const startBtn = document.getElementById('start-btn');
+            const glossaryBtn = document.getElementById('glossary-btn');
+            const tocBtn = document.getElementById('toc-btn');
+            const fullscreenBtn = document.getElementById('fullscreen-btn');
+            const modalContainer = document.getElementById('modal-container');
+            const topBar = document.getElementById('top-bar');
+            const bottomBar = document.getElementById('bottom-bar');
+            const gradientContainer = document.getElementById('gradient-container');
+            const canvas = document.getElementById('particle-canvas');
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            
+            const slideMapIndex = Array.from(slides).findIndex(s => s.hasAttribute('data-slide-map'));
+
+
+            // --- FUNGSI UTAMA ---
+
+            /**
+             * Pindah ke slide tertentu berdasarkan indeksnya.
+             * @param {number} index - Indeks slide tujuan.
+             */
+            const goToSlide = (index) => {
+                if (index >= 0 && index < totalSlides) {
+                    slides[currentSlideIndex].classList.remove('active-slide');
+                    slides[index].classList.add('active-slide');
+                    currentSlideIndex = index;
+                    updateUI();
+                    // Simpan slide terakhir ke localStorage
+                    localStorage.setItem('lastSlideIndex', currentSlideIndex);
+                }
+            };
+
+            /**
+             * Memperbarui semua elemen UI (progress bar, counter, tombol, dan topik).
+             */
+            const updateUI = () => {
+                const progress = currentSlideIndex === 0 ? 0 : (currentSlideIndex / (totalSlides - 1)) * 100;
+                progressBar.style.width = `${progress}%`;
+                slideCounter.textContent = `${currentSlideIndex + 1} / ${totalSlides}`;
+
+                const isFirstSlide = currentSlideIndex === 0;
+                topBar.style.opacity = isFirstSlide ? '0' : '1';
+                topBar.style.pointerEvents = isFirstSlide ? 'none' : 'auto';
+                bottomBar.style.opacity = isFirstSlide ? '0' : '1';
+                bottomBar.style.pointerEvents = isFirstSlide ? 'none' : 'auto';
+
+                // Update Latar Belakang Gradien
+                document.querySelectorAll('.gradient-layer').forEach(el => el.classList.remove('active-gradient'));
+                const gradientIndex = (currentSlideIndex % 5) + 1;
+                const activeGradient = document.getElementById(`gradient-bg-${gradientIndex}`);
+                if(activeGradient) activeGradient.classList.add('active-gradient');
+
+                // Update Tampilan Topik
+                const topicContainer = document.getElementById('topic-display-container');
+                const topicDisplay = document.getElementById('current-topic');
+                const currentSlide = slides[currentSlideIndex];
+                const topic = currentSlide.dataset.topic;
+                const subtopic = currentSlide.dataset.subtopic;
+
+                if (topic) {
+                    let displayText = topic;
+                    if (subtopic) {
+                        displayText += ` <span class="text-gray-400 mx-2">&gt;</span> ${subtopic}`;
+                    }
+                    topicDisplay.innerHTML = displayText; // Gunakan innerHTML untuk separator
+                    topicContainer.classList.remove('opacity-0');
+                } else {
+                    topicContainer.classList.add('opacity-0');
+                }
+            };
+            
+            /**
+             * Membuka modal yang spesifik.
+             * @param {string} modalId - ID dari modal yang akan dibuka.
+             */
+            window.openModal = (modalId) => {
+                const targetModal = document.getElementById(modalId);
+                if (!targetModal) return;
+                
+                // Khusus untuk modal video, atur src iframe saat dibuka
+                if (modalId === 'modal-video-intro') {
+                    const iframe = document.getElementById('video-iframe');
+                    if (iframe && iframe.dataset.src) {
+                        iframe.src = iframe.dataset.src;
+                    }
+                }
+
+                modalContainer.classList.remove('hidden');
+                document.querySelectorAll('.modal-item').forEach(modal => modal.classList.add('hidden'));
+                targetModal.classList.remove('hidden');
+                targetModal.setAttribute('tabindex', '-1');
+                targetModal.focus();
+            };
+
+            /**
+             * Menutup semua modal yang terbuka.
+             */
+            window.closeAllModals = () => {
+                if (modalContainer.classList.contains('hidden')) return;
+                
+                // Khusus untuk modal video, hapus src untuk menghentikan pemutaran
+                const iframe = document.getElementById('video-iframe');
+                if (iframe) {
+                    iframe.src = '';
+                }
+
+                modalContainer.classList.add('hidden');
+                document.querySelectorAll('.modal-item').forEach(modal => {
+                    modal.classList.add('hidden');
+                    modal.removeAttribute('tabindex');
+                });
+            };
+            
+            /**
+             * Toggle mode layar penuh.
+             */
+            async function toggleFullScreen() {
+                try {
+                    if (!document.fullscreenElement) {
+                        await document.documentElement.requestFullscreen();
+                    } else if (document.exitFullscreen) {
+                        await document.exitFullscreen();
+                    }
+                } catch (err) {
+                    console.error('Error toggling fullscreen:', err);
+                }
+            }
+
+            /**
+             * Membuat daftar isi secara dinamis.
+             */
+            const generateTOC = () => {
+                const tocContent = document.getElementById('toc-content');
+                tocContent.innerHTML = ''; // Kosongkan dulu
+                const list = document.createElement('ul');
+
+                slides.forEach((slide, index) => {
+                    let titleElement = slide.querySelector('h2');
+                    if (!titleElement) titleElement = slide.querySelector('h1');
+                    
+                    const titleText = slide.dataset.title || (titleElement ? titleElement.textContent.trim() : `Slide ${index + 1}`);
+
+                    const listItem = document.createElement('li');
+                    
+                    if (index === currentSlideIndex) {
+                        listItem.innerHTML = `<span class="mr-2"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg></span> <span class="active-toc-item">${titleText}</span>`;
+                    } else {
+                        listItem.textContent = titleText;
+                    }
+
+                    listItem.className = 'p-2 rounded-lg cursor-pointer hover:bg-cyan-500/30 flex items-center';
+                    listItem.onclick = () => {
+                        goToSlide(index);
+                        closeAllModals();
+                    };
+                    list.appendChild(listItem);
+                });
+                tocContent.appendChild(list);
+            };
+
+            // --- FUNGSI ANIMASI PARTIKEL ---
+            class Particle {
+                constructor() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                    this.vx = (Math.random() - 0.5) * 0.5;
+                    this.vy = (Math.random() - 0.5) * 0.5;
+                    this.radius = Math.random() * 1.5 + 1;
+                }
+                update() {
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                    if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+                }
+                draw() {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(0, 170, 255, 0.7)';
+                    ctx.fill();
+                }
+            }
+            const resizeCanvas = () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            };
+            const createParticles = () => {
+                particles = [];
+                const particleCount = Math.floor(canvas.width * canvas.height / 15000);
+                for (let i = 0; i < particleCount; i++) {
+                    particles.push(new Particle());
+                }
+            };
+            const connectParticles = () => {
+                for (let i = 0; i < particles.length; i++) {
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const dx = particles[i].x - particles[j].x;
+                        const dy = particles[i].y - particles[j].y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        if (distance < 120) {
+                            ctx.beginPath();
+                            ctx.moveTo(particles[i].x, particles[i].y);
+                            ctx.lineTo(particles[j].x, particles[j].y);
+                            ctx.strokeStyle = `rgba(0, 170, 255, ${1 - distance / 120})`;
+                            ctx.lineWidth = 0.5;
+                            ctx.stroke();
+                        }
+                    }
+                }
+            };
+
+            const animate = () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach(p => {
+                    p.update();
+                    p.draw();
+                });
+                connectParticles();
+                animationFrameId = requestAnimationFrame(animate);
+            };
+
+            // --- INISIALISASI & EVENT LISTENERS ---
+
+            const initialize = () => {
+                // Buat elemen gradien
+                for (let i = 1; i <= 5; i++) {
+                    const div = document.createElement('div');
+                    div.className = `gradient-layer gradient-${i}`;
+                    div.id = `gradient-bg-${i}`;
+                    gradientContainer.appendChild(div);
+                }
+                
+                // Atur event listener untuk tombol
+                nextBtn.addEventListener('click', () => goToSlide(currentSlideIndex + 1));
+                prevBtn.addEventListener('click', () => goToSlide(currentSlideIndex - 1));
+                homeBtn.addEventListener('click', () => {
+                    const targetSlide = (currentSlideIndex > 0 && slideMapIndex !== -1) ? slideMapIndex : 0;
+                    goToSlide(targetSlide);
+                });
+                startBtn.addEventListener('click', async () => {
+                    goToSlide(1);
+                    if (!document.fullscreenElement) {
+                        await toggleFullScreen().catch(err => console.error('Error entering fullscreen:', err));
+                    }
+                });
+                fullscreenBtn.addEventListener('click', toggleFullScreen);
+                glossaryBtn.addEventListener('click', () => openModal('modal-glossary'));
+                tocBtn.addEventListener('click', () => {
+                    generateTOC();
+                    openModal('modal-toc');
+                });
+
+                // Interaksi Peta Pembelajaran
+                document.querySelectorAll('.main-topic-card').forEach(card => {
+                    card.addEventListener('click', () => {
+                        const subtopics = card.nextElementSibling;
+                        const arrow = card.querySelector('.collapse-arrow');
+                        if (subtopics && subtopics.classList.contains('subtopics-container')) {
+                            subtopics.classList.toggle('open');
+                            arrow.classList.toggle('open');
+                        }
+                    });
+                });
+
+                // Navigasi dari Subtopik
+                document.querySelectorAll('.nav-subtopic').forEach(el => {
+                    el.addEventListener('click', () => {
+                        const targetTitle = el.dataset.slideTargetTitle;
+                        const targetIndex = Array.from(slides).findIndex(slide => {
+                            const h2 = slide.querySelector('h2');
+                            return h2 && h2.textContent.trim() === targetTitle;
+                        });
+                        if (targetIndex !== -1) {
+                            goToSlide(targetIndex);
+                        }
+                    });
+                });
+
+                // Navigasi Keyboard
+                document.addEventListener('keydown', (e) => {
+                    if (!modalContainer.classList.contains('hidden')) {
+                        if (e.key === 'Escape') closeAllModals();
+                        return;
+                    }
+                    switch (e.key) {
+                        case 'ArrowRight':
+                        case ' ': // Spasi untuk ke slide berikutnya
+                            if (currentSlideIndex < totalSlides - 1) goToSlide(currentSlideIndex + 1);
+                            break;
+                        case 'ArrowLeft':
+                            if (currentSlideIndex > 0) goToSlide(currentSlideIndex - 1);
+                            break;
+                        case 'Escape':
+                            if (document.fullscreenElement) document.exitFullscreen();
+                            break;
+                        case 'Home':
+                            goToSlide(0);
+                            break;
+                        case 'End':
+                            goToSlide(totalSlides - 1);
+                            break;
+                    }
+                });
+
+                // Optimasi Performa Animasi
+                document.addEventListener('visibilitychange', () => {
+                    if (document.hidden) {
+                        cancelAnimationFrame(animationFrameId);
+                    } else {
+                        animate();
+                    }
+                });
+
+                // Inisialisasi Canvas & Animasi
+                resizeCanvas();
+                createParticles();
+                animate();
+
+                // Cek Sesi Terakhir
+                const savedIndex = localStorage.getItem('lastSlideIndex');
+                if (savedIndex && parseInt(savedIndex) > 0) {
+                    const dialog = document.getElementById('resume-dialog');
+                    dialog.classList.remove('hidden');
+                    document.getElementById('resume-yes').onclick = () => {
+                        goToSlide(parseInt(savedIndex));
+                        dialog.classList.add('hidden');
+                        if (!document.fullscreenElement) {
+                            toggleFullScreen().catch(err => console.error('Error entering fullscreen:', err));
+                        }
+                    };
+                    document.getElementById('resume-no').onclick = () => {
+                        localStorage.removeItem('lastSlideIndex');
+                        goToSlide(0); // Mulai dari awal jika menolak
+                        dialog.classList.add('hidden');
+                    };
+                } else {
+                    // Jika tidak ada sesi tersimpan, mulai dari awal
+                    updateUI();
+                }
+            };
+            
+            // Jalankan semua
+            initialize();
+        });
+    </script>
+</body>
+</html>
